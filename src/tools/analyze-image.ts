@@ -10,7 +10,12 @@ export function registerAnalyzeImageTool(server: McpServer, vision: VisionServic
             title: "Analyze Image",
             description: "Analyze image and return structured description",
             inputSchema: {
-                image_url: z.string().url().describe("Publicly accessible image URL"),
+                image_url: z
+                    .string()
+                    .min(1)
+                    .describe(
+                        "Image location. Accepts: http(s) URL, file:// URL, Windows path (e.g. C:\\path\\file.png), or data: URI"
+                    ),
                 analysis_type: z.enum(["general", "ui", "layout", "components"]).optional()
             }
         },

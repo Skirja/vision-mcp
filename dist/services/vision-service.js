@@ -1,5 +1,8 @@
 import OpenAI from "openai";
 import { loadConfig } from "../server/config.js";
+import { promises as fs } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 export class VisionService {
     openai;
     model;
@@ -37,21 +40,79 @@ export class VisionService {
         return this.toResult(content, "general");
     }
     async sendImagePrompt(imageUrl, prompt) {
-        const response = await this.openai.chat.completions.create({
-            model: this.model,
-            messages: [
-                {
-                    role: "user",
-                    content: [
-                        { type: "image_url", image_url: { url: imageUrl } },
-                        { type: "text", text: prompt }
-                    ]
-                }
-            ],
-            max_tokens: 1200,
-            temperature: 0.1
-        });
-        return response.choices?.[0]?.message?.content ?? "";
+        const resolvedUrl = await this.resolveImageUrl(imageUrl);
+        try {
+            const response = await this.openai.chat.completions.create({
+                model: this.model,
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "image_url", image_url: { url: resolvedUrl } },
+                            { type: "text", text: prompt }
+                        ]
+                    }
+                ],
+                max_tokens: 1200,
+                temperature: 0.1
+            });
+            return response.choices?.[0]?.message?.content ?? "";
+        }
+        catch (err) {
+            const status = err?.status ?? err?.response?.status;
+            const body = err?.response?.data ?? err?.message ?? "";
+            const preview = typeof body === "string" ? body.slice(0, 300) : JSON.stringify(body)?.slice(0, 300);
+            throw new Error(`Vision API request failed (status=${status ?? "unknown"}). Check CHUTES_API_KEY and image_url accessibility. Details: ${preview}`);
+        }
+    }
+    async resolveImageUrl(imageUrl) {
+        if (!imageUrl)
+            return imageUrl;
+        // Already a data URL
+        if (imageUrl.startsWith("data:"))
+            return imageUrl;
+        // file:// URL
+        if (imageUrl.startsWith("file://")) {
+            const filePath = fileURLToPath(imageUrl);
+            return await this.readFileAsDataUrl(filePath);
+        }
+        // Windows absolute path like C:\path\to\file.jpg or C:/path/to/file.jpg
+        if (/^[a-zA-Z]:[\\\/]/.test(imageUrl)) {
+            return await this.readFileAsDataUrl(imageUrl);
+        }
+        // Relative path - resolve relative to CWD
+        if (!imageUrl.startsWith("http") && !imageUrl.includes("://")) {
+            const absolutePath = path.resolve(imageUrl);
+            return await this.readFileAsDataUrl(absolutePath);
+        }
+        // HTTP(S) or others - pass through
+        return imageUrl;
+    }
+    async readFileAsDataUrl(filePath) {
+        const buf = await fs.readFile(filePath);
+        const mime = this.inferMimeType(filePath);
+        const base64 = buf.toString("base64");
+        return `data:${mime};base64,${base64}`;
+    }
+    inferMimeType(filePath) {
+        const ext = path.extname(filePath).toLowerCase();
+        switch (ext) {
+            case ".jpg":
+            case ".jpeg":
+                return "image/jpeg";
+            case ".png":
+                return "image/png";
+            case ".webp":
+                return "image/webp";
+            case ".gif":
+                return "image/gif";
+            case ".bmp":
+                return "image/bmp";
+            case ".svg":
+                return "image/svg+xml";
+            default:
+                return "application/octet-stream";
+        }
     }
     getPromptForAnalysisType(type) {
         const prompts = {

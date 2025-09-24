@@ -9,7 +9,12 @@ export function registerExtractUiTool(server: McpServer, vision: VisionService) 
             title: "Extract UI Components",
             description: "Identify UI components in the image",
             inputSchema: {
-                image_url: z.string().url(),
+                image_url: z
+                    .string()
+                    .min(1)
+                    .describe(
+                        "Image location. Accepts: http(s) URL, file:// URL, Windows path (e.g. C:\\path\\file.png), or data: URI"
+                    ),
                 component_types: z.array(z.string()).optional()
             }
         },
