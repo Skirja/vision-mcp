@@ -1,7 +1,7 @@
 {
     "name": "vision-mcp-server",
-    "version": "0.1.0",
-    "description": "MCP server for visual understanding using GLM-4.5V (Chutes AI)",
+    "version": "1.0.0",
+    "description": "MCP server for visual understanding using OpenAI GPT-4V and compatible APIs",
     "private": false,
     "type": "module",
     "main": "dist/server/index.js",
@@ -17,9 +17,11 @@
     "keywords": [
         "mcp",
         "vision",
-        "glm-4.5v",
-        "chutes",
-        "openai-compatible"
+        "openai",
+        "gpt-4v",
+        "visual-understanding",
+        "image-analysis",
+        "ui-extraction"
     ],
     "author": "",
     "license": "MIT",

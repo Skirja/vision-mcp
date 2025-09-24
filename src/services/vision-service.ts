@@ -12,7 +12,7 @@ export class VisionService {
     constructor() {
         const cfg = loadConfig();
         if (!cfg.apiKey) {
-            console.warn("CHUTES_API_KEY not set. Vision requests will fail until provided.");
+            console.warn("OPENAI_API_KEY not set. Vision requests will fail until provided.");
         }
         this.openai = new OpenAI({
             baseURL: cfg.apiBaseUrl,
@@ -70,7 +70,7 @@ export class VisionService {
             const status = err?.status ?? err?.response?.status;
             const body = err?.response?.data ?? err?.message ?? "";
             const preview = typeof body === "string" ? body.slice(0, 300) : JSON.stringify(body)?.slice(0, 300);
-            throw new Error(`Vision API request failed (status=${status ?? "unknown"}). Check CHUTES_API_KEY and image_url accessibility. Details: ${preview}`);
+            throw new Error(`Vision API request failed (status=${status ?? "unknown"}). Check OPENAI_API_KEY and image_url accessibility. Details: ${preview}`);
         }
     }
 
