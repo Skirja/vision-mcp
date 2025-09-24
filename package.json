@@ -1,0 +1,39 @@
+{
+    "name": "vision-mcp-server",
+    "version": "0.1.0",
+    "description": "MCP server for visual understanding using GLM-4.5V (Chutes AI)",
+    "private": false,
+    "type": "module",
+    "main": "dist/server/index.js",
+    "bin": {
+        "vision-mcp": "./bin/vision-mcp"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/server/index.js",
+        "dev": "ts-node --transpile-only src/server/index.ts",
+        "check": "tsc -p tsconfig.json --noEmit"
+    },
+    "keywords": [
+        "mcp",
+        "vision",
+        "glm-4.5v",
+        "chutes",
+        "openai-compatible"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.18.1",
+        "openai": "^4.57.0",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.10",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.6.3"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

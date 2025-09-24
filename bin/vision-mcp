@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+import('../dist/server/index.js').then(mod => {
+    if (mod && typeof mod.start === 'function') {
+        mod.start();
+    } else if (mod && mod.default && typeof mod.default.start === 'function') {
+        mod.default.start();
+    } else {
+        console.error('Failed to start: start() not exported');
+        process.exit(1);
+    }
+}).catch(err => {
+    console.error(err);
+    process.exit(1);
+});
