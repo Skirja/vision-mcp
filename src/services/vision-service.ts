@@ -24,30 +24,72 @@ export class VisionService {
 
     async analyzeImage(imageUrl: string, analysisType: AnalysisType = "general"): Promise<VisionResult> {
         const prompt = this.getPromptForAnalysisType(analysisType);
-        const content = await this.sendImagePrompt(imageUrl, prompt);
+        const content = await this.sendImagePrompt(imageUrl, prompt, analysisType);
         return this.toResult(content, analysisType);
     }
 
     async extractUIComponents(imageUrl: string, componentTypes?: string[]): Promise<VisionResult> {
         const extra = componentTypes && componentTypes.length ? ` Only include these component types when present: ${componentTypes.join(", ")}.` : "";
-        const prompt = `Identify all UI components in this design. For each component, provide type, position (x,y,width,height), and a concise description. Return JSON only.${extra}`;
-        const content = await this.sendImagePrompt(imageUrl, prompt);
+        const prompt = `Extract UI components with coding-friendly details. For each component:
+- name: descriptive identifier
+- type: button, input, card, navbar, etc.
+- position: {x, y, width, height} in pixels
+- styling: {background, border, borderRadius, boxShadow, font properties}
+- states: hover, active, disabled styles if visible
+- children: nested components
+- accessibility: aria-labels, roles if inferable
+- confidence: 0.0-1.0 score for detection accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Return as structured JSON array for component generation.${extra}`;
+        const content = await this.sendImagePrompt(imageUrl, prompt, "components");
         return this.toResult(content, "components");
     }
 
     async generateLayoutDescription(imageUrl: string, framework: FrameworkType): Promise<VisionResult> {
-        const prompt = `Extract the layout structure for framework=${framework}. Describe the layout tree, grouping, and container structure. Provide a structured JSON with {framework, structure, notes}.`;
-        const content = await this.sendImagePrompt(imageUrl, prompt);
+        const frameworkSpecific = this.getFrameworkSpecificHints(framework);
+        const prompt = `Generate layout specification for ${framework} implementation. Include:
+- component_hierarchy: parent-child relationships with nesting
+- layout_method: flexbox/grid/absolute with specific properties
+- responsive_behavior: how layout adapts to different screen sizes
+- spacing_system: consistent margins, paddings, gaps in pixels
+- breakpoint_strategy: mobile-first or desktop-first
+- alignment_strategy: justify/align items and content
+- confidence: 0.0-1.0 score for layout detection accuracy
+${frameworkSpecific}
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Provide code-ready structure that can be directly implemented in ${framework}. Return JSON only.`;
+        const content = await this.sendImagePrompt(imageUrl, prompt, "layout");
         return this.toResult(content, "layout");
     }
 
     async analyzeVisualHierarchy(imageUrl: string): Promise<VisionResult> {
-        const prompt = "Analyze visual hierarchy, color roles, spacing rhythm, and typography scale. Return JSON with {hierarchy:[{level,element,rationale}], colors:[{name,hex,role}], spacing, typography}.";
-        const content = await this.sendImagePrompt(imageUrl, prompt);
+        const prompt = `Analyze visual hierarchy with implementation details:
+- visual_weight: [{element, weight(1-10), rationale}]
+- typography_scale: [{level, font_size, line_height, font_weight}]
+- color_system: {primary, secondary, accent, neutral colors with hex values}
+- spacing_scale: {base_unit, multipliers for different spacing needs}
+- interactive_states: hover, focus, active states differentiation
+- design_tokens: ready-to-use CSS variables structure
+- confidence: 0.0-1.0 score for hierarchy analysis accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Return JSON suitable for CSS variables and design token generation.`;
+        const content = await this.sendImagePrompt(imageUrl, prompt, "general");
         return this.toResult(content, "general");
     }
 
-    private async sendImagePrompt(imageUrl: string, prompt: string): Promise<string> {
+    private async sendImagePrompt(imageUrl: string, prompt: string, analysisType?: AnalysisType): Promise<string> {
         const resolvedUrl = await this.resolveImageUrl(imageUrl);
         try {
             const response = await this.openai.chat.completions.create({
@@ -61,8 +103,8 @@ export class VisionService {
                         ] as any
                     }
                 ],
-                max_tokens: 1200,
-                temperature: 0.1
+                max_tokens: 8192,
+                temperature: this.getTemperature(analysisType)
             });
 
             return response.choices?.[0]?.message?.content ?? "";
@@ -131,12 +173,94 @@ export class VisionService {
 
     private getPromptForAnalysisType(type: AnalysisType): string {
         const prompts: Record<AnalysisType, string> = {
-            general: "Analyze this image and provide a detailed description including main elements, colors, layout, and purpose. Return JSON only.",
-            ui: "Analyze this UI/UX design. Identify components, layout structure, interactive elements, and design patterns. Return JSON only.",
-            layout: "Extract the layout structure from this design. Describe the grid system, spacing, and component arrangement. Return JSON only.",
-            components: "Identify all UI components in this design. For each component, provide type, position, and description. Return JSON only."
+            general: `Analyze this UI design for coding implementation. Provide structured JSON with:
+- components: [{name, type, position: {x,y,width,height}, styling: {colors, typography, spacing}}]
+- layout: {gridSystem, spacing: {margin, padding, gap}, alignment}
+- design_system: {colors: [{name, hex, usage}], typography: [{element, font, size, weight}]}
+- confidence: 0.0-1.0 score for overall analysis accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Focus on details that can be directly converted to CSS/React components. Return JSON only.`,
+
+            ui: `Analyze this UI/UX design for precise implementation. Provide detailed JSON with:
+- components: [{name, type, position, styling, states, children, accessibility}]
+- layout: {container_type, flex_direction, grid_template, spacing_system}
+- interactive_elements: [{type, behavior, states}]
+- design_patterns: used patterns and implementation approach
+- confidence: 0.0-1.0 score for UI analysis accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Focus on pixel-perfect replication. Return JSON only.`,
+
+            layout: `Extract the layout structure for precise implementation. Provide JSON with:
+- component_hierarchy: parent-child relationships with nesting
+- layout_method: flexbox/grid/absolute with specific properties
+- responsive_behavior: breakpoints and layout changes
+- spacing_system: consistent margins, paddings, gaps in pixels
+- alignment_strategy: justify/align items and content
+- confidence: 0.0-1.0 score for layout detection accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Return JSON suitable for direct CSS/component implementation.`,
+
+            components: `Identify all UI components with implementation details. For each component:
+- name: descriptive identifier
+- type: button, input, card, navbar, etc.
+- position: {x, y, width, height} in pixels
+- styling: {background, border, borderRadius, boxShadow, font properties}
+- states: hover, active, disabled styles if visible
+- children: nested components
+- confidence: 0.0-1.0 score for component detection accuracy
+
+**IMPORTANT**:
+- If image is unclear, make reasonable assumptions based on visible elements
+- Always return valid JSON even with incomplete information
+- Focus on implementable details rather than aesthetic descriptions
+Return as structured JSON array for component generation.`
         };
         return prompts[type] || prompts.general;
+    }
+
+    private getTemperature(type: AnalysisType = "general"): number {
+        switch (type) {
+            case "general": return 0.30;   // More creative for general analysis
+            case "ui": return 0.20;        // More precise for UI components
+            case "layout": return 0.25;    // Balanced for layout structure
+            case "components": return 0.20; // Very precise for component detection
+            default: return 0.25;
+        }
+    }
+
+    private getFrameworkSpecificHints(framework: FrameworkType): string {
+        switch (framework) {
+            case "react":
+                return `- react_specific: hooks usage, state management suggestions, component composition patterns
+- functional_components: prefer functional components with hooks
+- props_structure: recommended prop types and default props`;
+            case "vue":
+                return `- vue_specific: composition API options, reactive state management
+- component_structure: single file components organization
+- vue_features: directives, computed properties, watchers usage`;
+            case "html":
+                return `- html_specific: semantic HTML5 elements, accessibility best practices
+- css_integration: inline styles vs external classes recommendations
+- vanilla_js: DOM manipulation suggestions if needed`;
+            case "tailwind":
+                return `- tailwind_specific: utility classes, spacing scale, breakpoints
+- custom_styles: when to use custom CSS vs Tailwind utilities
+- responsive_design: mobile-first approach with Tailwind breakpoints`;
+            default:
+                return "";
+        }
     }
 
     private toResult(content: string, type: AnalysisType): VisionResult {

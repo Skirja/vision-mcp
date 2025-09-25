@@ -7,7 +7,7 @@ export function registerExtractUiTool(server: McpServer, vision: VisionService) 
         "extract_ui_components",
         {
             title: "Extract UI Components",
-            description: "Identify UI components in the image",
+            description: "STEP 3: Extract detailed UI components with coding-ready specifications. Use after general analysis to identify specific components (buttons, inputs, cards, navbars, etc.) with position, styling, and interactive elements. Optional component_types parameter to filter specific component types. Returns structured data ready for component implementation.",
             inputSchema: {
                 image_url: z
                     .string()

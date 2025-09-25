@@ -8,7 +8,7 @@ export function registerGenerateLayoutTool(server: McpServer, vision: VisionServ
         "generate_layout_description",
         {
             title: "Generate Layout Description",
-            description: "Generate layout description for coding",
+            description: "STEP 4: Generate framework-specific layout implementation. Use this as the final step to convert analysis into code-ready structure. Specify framework (react, vue, html, tailwind) for targeted implementation. Returns component hierarchy, layout methods (flexbox/grid), responsive behavior, and spacing system optimized for your chosen framework.",
             inputSchema: {
                 image_url: z
                     .string()

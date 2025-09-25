@@ -102,6 +102,60 @@ npm run build
 }
 ```
 
+## Recommended Workflow
+
+For the best results when analyzing UI/UX designs, follow this step-by-step workflow:
+
+### Step 1: Initial Analysis
+**Tool**: `analyze_image` with `analysis_type: "general"`
+**Purpose**: Get a comprehensive overview of the image to understand its type, components, and general structure
+```json
+{
+  "image_url": "./design.png",
+  "analysis_type": "general"
+}
+```
+
+### Step 2: Visual Hierarchy Analysis
+**Tool**: `analyze_visual_hierarchy`
+**Purpose**: Understand the design system foundations - colors, typography, spacing, and visual weight
+```json
+{
+  "image_url": "./design.png"
+}
+```
+
+### Step 3: Component Extraction
+**Tool**: `extract_ui_components`
+**Purpose**: Identify specific UI components with detailed specifications for implementation
+```json
+{
+  "image_url": "./design.png",
+  "component_types": ["button", "input", "card"]  // Optional: filter specific components
+}
+```
+
+### Step 4: Layout Generation
+**Tool**: `generate_layout_description` with your target framework
+**Purpose**: Generate framework-specific implementation structure
+```json
+{
+  "image_url": "./design.png",
+  "framework": "react"  // Options: react, vue, html, tailwind
+}
+```
+
+### Workflow Benefits
+- **Progressive Understanding**: Each step builds on the previous analysis
+- **Comprehensive Coverage**: From general overview to specific implementation details
+- **Framework-Ready**: Final step provides targeted implementation guidance
+- **Flexible**: Can skip steps if you already have specific requirements
+
+### Quick Start Options
+- **For quick analysis**: Use only `analyze_image` with appropriate `analysis_type`
+- **For component extraction**: Skip to `extract_ui_components` if you only need components
+- **For layout implementation**: Use `generate_layout_description` directly if you have a design
+
 ## Supported Image Formats
 - **Local files**: `./image.jpg`, `C:/path/image.png`, `/path/to/image.jpg`
 - **File URLs**: `file:///C:/path/image.png`

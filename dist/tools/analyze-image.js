@@ -2,7 +2,7 @@ import { z } from "zod";
 export function registerAnalyzeImageTool(server, vision) {
     server.registerTool("analyze_image", {
         title: "Analyze Image",
-        description: "Analyze image and return structured description",
+        description: "STEP 1: Analyze image for comprehensive UI/UX understanding. Use this first for general analysis to identify image type, components, layout structure, and design patterns. Supports analysis_type: 'general' (default), 'ui', 'layout', or 'components'. This is your starting point for any image analysis workflow.",
         inputSchema: {
             image_url: z
                 .string()
