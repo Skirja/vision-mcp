@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "vision-mcp": {
+      "command": "bun",
+      "args": ["/home/skirja/MCP/vision-mcp/dist/index.js"],
+      "env": {
+        "VISION_API_BASE_URL": "https://llm.chutes.ai/v1",
+        "VISION_API_KEY": "cpk_fae02c15d7f746be8c395b90e651dbb8.c1e373000a52563ba475ff6c01756ab4.Zv3JXttDxfJrDp7a31ELIi74XwFwZTgg",
+        "VISION_MODEL_NAME": "Qwen/Qwen3-VL-235B-A22B-Instruct",
+        "VISION_MAX_TOKENS": "32000"
+      }
+    }
+  }
+}
