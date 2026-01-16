@@ -210,6 +210,13 @@ MIT License - lihat file [LICENSE](LICENSE) untuk detail.
 
 ## Changelog
 
+### v2.0.0
+- Complete rewrite with improved architecture
+- Better error handling and validation
+- Enhanced type safety with Zod schemas
+- Improved file handling with support for multiple formats
+- Cleaner code structure and separation of concerns
+
 ### v1.0.0
 - Initial release
 - Single vision tool implementation
